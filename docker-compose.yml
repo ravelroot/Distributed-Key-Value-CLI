@@ -1,0 +1,67 @@
+name: leme
+
+x-no: &no
+  build: .
+  image: leme:local
+  restart: unless-stopped
+  environment: &ambiente
+    LEME_CLUSTER: ${LEME_CLUSTER:-leme}
+    LEME_TOKEN: ${LEME_TOKEN:?defina LEME_TOKEN no .env (os scripts iniciar criam um)}
+    LEME_REPLICAS: ${LEME_REPLICAS:-3}
+    LEME_SINCRONIZAR: ${LEME_SINCRONIZAR:-intervalo}
+
+services:
+  no1:
+    <<: *no
+    environment:
+      <<: *ambiente
+      LEME_ID: no-1
+      LEME_ANUNCIAR: no1:7400
+    volumes: [dados-no1:/var/lib/leme]
+    ports: ["127.0.0.1:7401:7400"]
+
+  no2:
+    <<: *no
+    environment:
+      <<: *ambiente
+      LEME_ID: no-2
+      LEME_ANUNCIAR: no2:7400
+      LEME_ENTRAR: no1:7400
+    volumes: [dados-no2:/var/lib/leme]
+    ports: ["127.0.0.1:7402:7400"]
+    depends_on:
+      no1: { condition: service_healthy }
+
+  no3:
+    <<: *no
+    environment:
+      <<: *ambiente
+      LEME_ID: no-3
+      LEME_ANUNCIAR: no3:7400
+      LEME_ENTRAR: no1:7400,no2:7400
+    volumes: [dados-no3:/var/lib/leme]
+    ports: ["127.0.0.1:7403:7400"]
+    depends_on:
+      no1: { condition: service_healthy }
+
+  console:
+    image: leme:local
+    restart: unless-stopped
+    entrypoint: ["leme"]
+    command: ["console", "--endereco", "0.0.0.0:8080", "--nos", "no1:7400,no2:7400,no3:7400"]
+    environment:
+      LEME_TOKEN: ${LEME_TOKEN}
+      LEME_TOKEN_CONSOLE: ${LEME_TOKEN_CONSOLE:?defina LEME_TOKEN_CONSOLE no .env}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/saude"]
+      interval: 10s
+    ports: ["127.0.0.1:${LEME_PORTA_CONSOLE:-8080}:8080"]
+    depends_on:
+      no1: { condition: service_healthy }
+      no2: { condition: service_healthy }
+      no3: { condition: service_healthy }
+
+volumes:
+  dados-no1:
+  dados-no2:
+  dados-no3:

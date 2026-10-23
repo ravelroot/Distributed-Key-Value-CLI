@@ -1,0 +1,14 @@
+bin/
+dist/
+dados/
+dados-dev/
+.env
+.env.*
+!.env.example
+*.log
+*.test
+coverage.out
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

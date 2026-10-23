@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".github/atividade.txt"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes (Go)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Formatação
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: Análise estática
+        run: go vet ./...
+      - name: Testes com detector de corridas
+        run: go test -race -count=1 ./...
+
+  binarios:
+    name: Binários (${{ matrix.so }}/${{ matrix.arq }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        include:
+          - { so: linux, arq: amd64 }
+          - { so: linux, arq: arm64 }
+          - { so: windows, arq: amd64 }
+          - { so: darwin, arq: arm64 }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Compilar
+        env:
+          GOOS: ${{ matrix.so }}
+          GOARCH: ${{ matrix.arq }}
+          CGO_ENABLED: "0"
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+          LD="-s -w -X github.com/ravelroot/Distributed-Key-Value-CLI/internal/versao.Versao=$(cat VERSION) -X github.com/ravelroot/Distributed-Key-Value-CLI/internal/versao.Commit=${GITHUB_SHA::7}"
+          go build -trimpath -ldflags "$LD" -o dist/leme$EXT ./cmd/leme
+          go build -trimpath -ldflags "$LD" -o dist/lemed$EXT ./cmd/lemed
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leme-${{ matrix.so }}-${{ matrix.arq }}
+          path: dist/
+          retention-days: 7
+
+  ponta-a-ponta:
+    name: Cluster de verdade (3 nós + CLI)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Compilar
+        run: go build -o bin/ ./cmd/...
+      - name: Subir os nós e exercitar a CLI
+        run: bash scripts/ponta-a-ponta.sh ./bin
+
+  docker:
+    name: Imagem Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Construir a imagem
+        run: docker build -t leme:ci .
+      - name: Versão dentro da imagem
+        run: docker run --rm --entrypoint leme leme:ci version

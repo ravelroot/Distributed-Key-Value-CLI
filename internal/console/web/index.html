@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leme · console do cluster</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<script src="tema.js"></script>
+</head>
+<body>
+<div class="casca">
+  <aside class="menu" id="menu">
+    <div class="marca">
+      <img class="marca-logo" src="logo.svg" alt="">
+      <div>
+        <div class="marca-nome">Leme</div>
+        <div class="marca-versao" id="versao">console</div>
+      </div>
+    </div>
+    <nav class="navegacao">
+      <a href="#geral" data-pagina="geral"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="18" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>Visão geral</a>
+      <a href="#nos" data-pagina="nos"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7.5l3 8M16 7.5l-3 8M8.5 6h7"/></svg>Nós</a>
+      <a href="#anel" data-pagina="anel"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="1.6"/><circle cx="19" cy="15.5" r="1.6"/><circle cx="5" cy="15.5" r="1.6"/></svg>Anel</a>
+      <a href="#chaves" data-pagina="chaves"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M21 12v2"/></svg>Chaves</a>
+      <a href="#terminal" data-pagina="terminal"><svg viewBox="0 0 24 24"><path d="M5 7l5 5-5 5M12 17h7"/></svg>Terminal</a>
+    </nav>
+    <div class="menu-rodape">
+      <div class="conexao"><span class="ponto" id="conexao"></span><span id="cluster-nome">conectando…</span></div>
+      <button class="botao-tema" id="tema" type="button" aria-label="Alternar tema"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+    </div>
+  </aside>
+
+  <main class="principal">
+    <header class="cabecalho">
+      <button class="abrir-menu" id="abrir-menu" type="button" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div>
+        <h1 class="titulo" id="titulo">Visão geral</h1>
+        <p class="subtitulo" id="subtitulo">Estado do cluster em tempo real</p>
+      </div>
+      <div class="atualizado" id="atualizado"></div>
+    </header>
+
+    <section class="pagina" data-secao="geral">
+      <div class="caixa grade-geral">
+        <div class="comp tampa area-tampa">
+          <div class="rotulo">Saúde do cluster</div>
+          <div class="saude"><span class="ponto grande" id="g-saude-ponto"></span><span id="g-saude">—</span></div>
+          <div class="numero-grande" id="g-chaves">—</div>
+          <div class="rotulo-claro">chaves no cluster · <span id="g-copias">—</span> cópias gravadas</div>
+          <div class="tampa-rodape"><span id="g-cluster">—</span><span id="g-replicacao">—</span></div>
+        </div>
+        <div class="comp"><div class="rotulo">Nós vivos</div><div class="numero" id="g-nos">—</div><div class="detalhe" id="g-nos-det">—</div></div>
+        <div class="comp"><div class="rotulo">Operações atendidas</div><div class="numero" id="g-ops">—</div><div class="detalhe" id="g-ops-det">—</div></div>
+        <div class="comp"><div class="rotulo">Latência p99 de leitura</div><div class="numero" id="g-p99get">—</div><div class="detalhe">milissegundos, pior nó</div></div>
+        <div class="comp"><div class="rotulo">Latência p99 de escrita</div><div class="numero" id="g-p99put">—</div><div class="detalhe">milissegundos, pior nó</div></div>
+        <div class="comp"><div class="rotulo">Disco</div><div class="numero" id="g-disco">—</div><div class="detalhe" id="g-disco-det">—</div></div>
+        <div class="comp"><div class="rotulo">Pendências</div><div class="numero" id="g-dicas">—</div><div class="detalhe" id="g-dicas-det">dicas aguardando réplicas</div></div>
+        <div class="comp area-tabela">
+          <div class="comp-cabecalho"><h2>Nós</h2><a href="#nos" class="link">ver todos</a></div>
+          <table class="tabela"><thead><tr><th></th><th>Nó</th><th>Endereço</th><th class="d">Chaves</th><th class="d">Disco</th><th class="d">Operações</th><th class="d">No ar</th></tr></thead><tbody id="g-tabela"></tbody></table>
+        </div>
+        <div class="comp area-anel">
+          <div class="comp-cabecalho"><h2>Anel</h2><a href="#anel" class="link">detalhes</a></div>
+          <svg class="anel-mini" id="g-anel" viewBox="0 0 220 220"></svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="pagina" data-secao="nos" hidden>
+      <div class="caixa">
+        <div class="comp">
+          <table class="tabela"><thead><tr><th></th><th>Nó</th><th>Endereço</th><th>Estado</th><th class="d">Chaves</th><th class="d">Lápides</th><th class="d">Disco</th><th class="d">Fragmentação</th><th class="d">Operações</th><th class="d">p99 get</th><th class="d">Anel</th><th class="d">No ar</th></tr></thead><tbody id="n-tabela"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section class="pagina" data-secao="anel" hidden>
+      <div class="caixa grade-anel">
+        <div class="comp tampa">
+          <svg class="anel-grande" id="a-anel" viewBox="0 0 320 320"></svg>
+        </div>
+        <div class="comp">
+          <div class="comp-cabecalho"><h2>Participação</h2><span class="detalhe" id="a-info"></span></div>
+          <div id="a-legenda" class="legenda"></div>
+          <form class="localizar" id="a-form">
+            <label class="rotulo" for="a-chave">Onde fica uma chave?</label>
+            <div class="linha-campo"><input id="a-chave" class="campo" placeholder="usuario:42" autocomplete="off"><button class="botao" type="submit">Localizar</button></div>
+          </form>
+          <div id="a-resultado"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pagina" data-secao="chaves" hidden>
+      <div class="caixa">
+        <div class="comp barra-chaves">
+          <form id="c-form" class="linha-campo">
+            <input id="c-prefixo" class="campo" placeholder="Prefixo, por exemplo usuario:" autocomplete="off">
+            <button class="botao" type="submit">Buscar</button>
+            <button class="botao escuro" id="c-nova" type="button">Nova chave</button>
+          </form>
+        </div>
+        <div class="comp">
+          <table class="tabela clicavel"><thead><tr><th>Chave</th><th>Valor</th><th class="d">Tamanho</th><th class="d">Gravado</th><th class="d">TTL</th></tr></thead><tbody id="c-tabela"></tbody></table>
+          <div class="rodape-tabela"><span id="c-total"></span><button class="botao" id="c-mais" type="button" hidden>Carregar mais</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pagina" data-secao="terminal" hidden>
+      <div class="caixa">
+        <div class="comp tampa terminal" id="t-terminal">
+          <div class="t-saida" id="t-saida"></div>
+          <form class="t-linha" id="t-form"><span class="t-prompt">leme ›</span><input id="t-entrada" autocomplete="off" spellcheck="false" aria-label="Comando"></form>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="veu" id="veu" hidden></div>
+<aside class="gaveta" id="gaveta" aria-hidden="true">
+  <div class="gaveta-cabecalho"><h2 id="gv-titulo">Chave</h2><button class="fechar" id="gv-fechar" type="button" aria-label="Fechar">×</button></div>
+  <div class="gaveta-corpo" id="gv-corpo"></div>
+</aside>
+<div class="aviso" id="aviso" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
