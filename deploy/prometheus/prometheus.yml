@@ -1,0 +1,34 @@
+# Coleta das métricas dos nós Leme. Cada lemed expõe /metricas quando sobe com
+# --metricas (ou LEME_METRICAS). Ajuste os alvos para os seus nós.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - alertas.yml
+
+scrape_configs:
+  - job_name: leme
+    metrics_path: /metricas
+    static_configs:
+      - targets: ["10.0.0.11:9400", "10.0.0.12:9400", "10.0.0.13:9400"]
+        labels: { ambiente: producao }
+
+  # No Kubernetes, use a descoberta de pods com as anotações prometheus.io/*
+  # que deploy/kubernetes/leme.yaml já coloca nos nós.
+  - job_name: leme-kubernetes
+    metrics_path: /metricas
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: leme
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__

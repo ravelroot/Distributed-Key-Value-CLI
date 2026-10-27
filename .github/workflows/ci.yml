@@ -89,3 +89,21 @@ jobs:
         run: docker build -t leme:ci .
       - name: Versão dentro da imagem
         run: docker run --rm --entrypoint leme leme:ci version
+      - name: Compose com o perfil de observabilidade
+        run: LEME_TOKEN=ci LEME_TOKEN_CONSOLE=ci docker compose --profile observabilidade config -q
+
+  integracoes:
+    name: Manifestos de integração
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: YAML e JSON válidos
+        run: |
+          python3 -c "import json,sys; json.load(open('deploy/grafana/leme-dashboard.json'))"
+          python3 - <<'PY'
+          import yaml, glob
+          for f in glob.glob('deploy/**/*.y*ml', recursive=True):
+              list(yaml.safe_load_all(open(f)))
+              print('ok', f)
+          PY

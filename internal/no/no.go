@@ -115,6 +115,8 @@ type No struct {
 	parado   atomic.Bool
 	saindo   atomic.Bool
 	redist   sync.Mutex
+
+	condicionais travasCondicionais
 }
 
 func Novo(cfg Config) (*No, error) {

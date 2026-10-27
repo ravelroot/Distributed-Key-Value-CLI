@@ -1,0 +1,11 @@
+# Usado pelo perfil "observabilidade" do docker-compose.yml.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+rule_files:
+  - alertas.yml
+scrape_configs:
+  - job_name: leme
+    metrics_path: /metricas
+    static_configs:
+      - targets: ["no1:9400", "no2:9400", "no3:9400"]

@@ -3,14 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Leme · console do cluster</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app.css">
 <script src="tema.js"></script>
 </head>
 <body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
 <div class="casca">
-  <aside class="menu" id="menu">
+  <aside class="menu" id="menu" aria-label="Navegação principal">
     <div class="marca">
       <img class="marca-logo" src="logo.svg" alt="">
       <div>
@@ -19,100 +21,160 @@
       </div>
     </div>
     <nav class="navegacao">
-      <a href="#geral" data-pagina="geral"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="18" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>Visão geral</a>
-      <a href="#nos" data-pagina="nos"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7.5l3 8M16 7.5l-3 8M8.5 6h7"/></svg>Nós</a>
-      <a href="#anel" data-pagina="anel"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="1.6"/><circle cx="19" cy="15.5" r="1.6"/><circle cx="5" cy="15.5" r="1.6"/></svg>Anel</a>
-      <a href="#chaves" data-pagina="chaves"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M21 12v2"/></svg>Chaves</a>
-      <a href="#terminal" data-pagina="terminal"><svg viewBox="0 0 24 24"><path d="M5 7l5 5-5 5M12 17h7"/></svg>Terminal</a>
+      <div class="grupo-nav">
+        <span class="grupo-rotulo">Cluster</span>
+        <a href="#geral" data-pagina="geral"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h4l2-6 4 12 2-6h4"/></svg><span>Visão geral</span></a>
+        <a href="#nos" data-pagina="nos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="6" rx="1"/><rect x="4" y="14" width="16" height="6" rx="1"/><path d="M8 7h.01M8 17h.01"/></svg><span>Nós</span></a>
+        <a href="#anel" data-pagina="anel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2M14.5 9.5l-4 1-1 4 4-1z"/></svg><span>Anel</span></a>
+      </div>
+      <div class="grupo-nav">
+        <span class="grupo-rotulo">Dados</span>
+        <a href="#chaves" data-pagina="chaves"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H20M17 12v3M20 12v2"/></svg><span>Chaves</span></a>
+      </div>
+      <div class="grupo-nav">
+        <span class="grupo-rotulo">Ferramentas</span>
+        <a href="#terminal" data-pagina="terminal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M7 10l3 2-3 2M12 15h5"/></svg><span>Terminal</span></a>
+        <a href="#diagnostico" data-pagina="diagnostico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6M10 4v5L5 18.5A1 1 0 0 0 5.9 20h12.2a1 1 0 0 0 .9-1.5L14 9V4"/><path d="M7.5 15h9"/></svg><span>Diagnóstico</span></a>
+        <a href="#integracoes" data-pagina="integracoes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7V4M15 7V4M7 7h10v4a5 5 0 0 1-10 0zM12 16v4"/></svg><span>Integrações</span></a>
+      </div>
     </nav>
     <div class="menu-rodape">
-      <div class="conexao"><span class="ponto" id="conexao"></span><span id="cluster-nome">conectando…</span></div>
-      <button class="botao-tema" id="tema" type="button" aria-label="Alternar tema"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <button class="botao-atalhos" id="ver-atalhos" type="button">Atalhos <kbd>?</kbd></button>
+      <button class="botao-icone" id="tema" type="button" aria-label="Alternar tema claro e escuro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" class="preenchido"/></svg></button>
     </div>
   </aside>
 
-  <main class="principal">
+  <main class="principal" id="conteudo" tabindex="-1">
+    <div class="faixa">
+      <button class="botao-icone abrir-menu" id="abrir-menu" type="button" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="faixa-item faixa-cluster"><span class="ponto" id="f-ponto"></span><span id="f-cluster">conectando…</span></div>
+      <div class="faixa-item"><span class="faixa-rotulo">Nós</span><span class="mono" id="f-nos">—</span></div>
+      <div class="faixa-item"><span class="faixa-rotulo">Réplicas</span><span class="mono" id="f-rep">—</span></div>
+      <div class="faixa-item"><span class="faixa-rotulo">Consistência</span><span class="mono" id="f-cons">—</span></div>
+      <div class="faixa-item faixa-vivo" id="f-vivo"><span class="pulso" aria-hidden="true"></span><span id="f-atualizado">aguardando</span></div>
+      <button class="busca" id="abrir-paleta" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Ir para, abrir chave, executar…</span><kbd>Ctrl K</kbd></button>
+    </div>
+
     <header class="cabecalho">
-      <button class="abrir-menu" id="abrir-menu" type="button" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div>
-        <h1 class="titulo" id="titulo">Visão geral</h1>
-        <p class="subtitulo" id="subtitulo">Estado do cluster em tempo real</p>
-      </div>
-      <div class="atualizado" id="atualizado"></div>
+      <h1 class="titulo" id="titulo">Visão geral</h1>
+      <p class="subtitulo" id="subtitulo">Estado do cluster em tempo real</p>
     </header>
 
     <section class="pagina" data-secao="geral">
-      <div class="caixa grade-geral">
-        <div class="comp tampa area-tampa">
-          <div class="rotulo">Saúde do cluster</div>
-          <div class="saude"><span class="ponto grande" id="g-saude-ponto"></span><span id="g-saude">—</span></div>
-          <div class="numero-grande" id="g-chaves">—</div>
-          <div class="rotulo-claro">chaves no cluster · <span id="g-copias">—</span> cópias gravadas</div>
-          <div class="tampa-rodape"><span id="g-cluster">—</span><span id="g-replicacao">—</span></div>
+      <p class="frase-estado" id="g-frase"><span class="ponto" id="g-ponto"></span><span id="g-frase-texto">Lendo o estado do cluster…</span></p>
+      <div class="metricas">
+        <div class="metrica"><div class="metrica-rotulo">Chaves</div><div class="metrica-valor" id="g-chaves">—</div><div class="metrica-det" id="g-chaves-det">—</div></div>
+        <div class="metrica"><div class="metrica-rotulo">Operações por segundo</div><div class="metrica-valor" id="g-ops">—</div><svg class="faisca" id="g-faisca-ops" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"></svg><div class="metrica-det" id="g-ops-det">—</div></div>
+        <div class="metrica"><div class="metrica-rotulo">p99 de leitura</div><div class="metrica-valor"><span id="g-p99get">—</span><small>ms</small></div><svg class="faisca" id="g-faisca-get" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"></svg><div class="metrica-det">pior nó</div></div>
+        <div class="metrica"><div class="metrica-rotulo">p99 de escrita</div><div class="metrica-valor"><span id="g-p99put">—</span><small>ms</small></div><svg class="faisca" id="g-faisca-put" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"></svg><div class="metrica-det">pior nó</div></div>
+        <div class="metrica"><div class="metrica-rotulo">Disco</div><div class="metrica-valor" id="g-disco">—</div><div class="medidor" aria-hidden="true"><span id="g-disco-barra"></span></div><div class="metrica-det" id="g-disco-det">—</div></div>
+      </div>
+      <div class="grade-geral">
+        <div class="coluna">
+          <div class="painel">
+            <div class="painel-cab"><h2>Nós</h2><a href="#nos" class="link">Ver detalhes</a></div>
+            <div class="rolagem"><table class="tabela"><thead><tr><th scope="col">Nó</th><th scope="col" class="op">Endereço</th><th scope="col" class="d">Chaves</th><th scope="col" class="d">Disco</th><th scope="col" class="d op2">Operações</th><th scope="col">Fatia do anel</th><th scope="col" class="d op">No ar</th></tr></thead><tbody id="g-tabela"></tbody></table></div>
+          </div>
+          <div class="painel">
+            <div class="painel-cab"><h2>Eventos</h2><span class="painel-nota" id="g-eventos-nota">desta sessão</span></div>
+            <ol class="eventos" id="g-eventos" aria-live="polite"></ol>
+          </div>
         </div>
-        <div class="comp"><div class="rotulo">Nós vivos</div><div class="numero" id="g-nos">—</div><div class="detalhe" id="g-nos-det">—</div></div>
-        <div class="comp"><div class="rotulo">Operações atendidas</div><div class="numero" id="g-ops">—</div><div class="detalhe" id="g-ops-det">—</div></div>
-        <div class="comp"><div class="rotulo">Latência p99 de leitura</div><div class="numero" id="g-p99get">—</div><div class="detalhe">milissegundos, pior nó</div></div>
-        <div class="comp"><div class="rotulo">Latência p99 de escrita</div><div class="numero" id="g-p99put">—</div><div class="detalhe">milissegundos, pior nó</div></div>
-        <div class="comp"><div class="rotulo">Disco</div><div class="numero" id="g-disco">—</div><div class="detalhe" id="g-disco-det">—</div></div>
-        <div class="comp"><div class="rotulo">Pendências</div><div class="numero" id="g-dicas">—</div><div class="detalhe" id="g-dicas-det">dicas aguardando réplicas</div></div>
-        <div class="comp area-tabela">
-          <div class="comp-cabecalho"><h2>Nós</h2><a href="#nos" class="link">ver todos</a></div>
-          <table class="tabela"><thead><tr><th></th><th>Nó</th><th>Endereço</th><th class="d">Chaves</th><th class="d">Disco</th><th class="d">Operações</th><th class="d">No ar</th></tr></thead><tbody id="g-tabela"></tbody></table>
-        </div>
-        <div class="comp area-anel">
-          <div class="comp-cabecalho"><h2>Anel</h2><a href="#anel" class="link">detalhes</a></div>
-          <svg class="anel-mini" id="g-anel" viewBox="0 0 220 220"></svg>
+        <div class="coluna">
+          <div class="painel">
+            <div class="painel-cab"><h2>Anel</h2><a href="#anel" class="link">Localizar chave</a></div>
+            <svg class="mostrador mostrador-mini" id="g-anel" viewBox="0 0 240 240" role="img" aria-label="Divisão do anel entre os nós"></svg>
+          </div>
+          <div class="painel">
+            <div class="painel-cab"><h2>Manutenção</h2></div>
+            <dl class="pares compacto" id="g-pend"></dl>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="pagina" data-secao="nos" hidden>
-      <div class="caixa">
-        <div class="comp">
-          <table class="tabela"><thead><tr><th></th><th>Nó</th><th>Endereço</th><th>Estado</th><th class="d">Chaves</th><th class="d">Lápides</th><th class="d">Disco</th><th class="d">Fragmentação</th><th class="d">Operações</th><th class="d">p99 get</th><th class="d">Anel</th><th class="d">No ar</th></tr></thead><tbody id="n-tabela"></tbody></table>
-        </div>
+      <div class="painel">
+        <div class="rolagem"><table class="tabela"><thead><tr><th scope="col">Nó</th><th scope="col" class="op">Endereço</th><th scope="col" class="op">Estado</th><th scope="col" class="d">Chaves</th><th scope="col" class="d op">Lápides</th><th scope="col" class="d">Disco</th><th scope="col" class="d op2">Fragmentação</th><th scope="col" class="d op">Operações</th><th scope="col" class="d op">p99 get</th><th scope="col">Fatia do anel</th><th scope="col" class="d op">No ar</th></tr></thead><tbody id="n-tabela"></tbody></table></div>
       </div>
+      <p class="nota" id="n-nota"></p>
+      <div class="fichas" id="n-fichas"></div>
     </section>
 
     <section class="pagina" data-secao="anel" hidden>
-      <div class="caixa grade-anel">
-        <div class="comp tampa">
-          <svg class="anel-grande" id="a-anel" viewBox="0 0 320 320"></svg>
+      <div class="grade-anel">
+        <div class="painel painel-mostrador">
+          <svg class="mostrador" id="a-anel" viewBox="0 0 360 360" role="img" aria-label="Mostrador do anel com a fatia de cada nó"></svg>
         </div>
-        <div class="comp">
-          <div class="comp-cabecalho"><h2>Participação</h2><span class="detalhe" id="a-info"></span></div>
+        <div class="painel">
+          <div class="painel-cab"><h2>Participação</h2><span class="painel-nota" id="a-info"></span></div>
           <div id="a-legenda" class="legenda"></div>
           <form class="localizar" id="a-form">
-            <label class="rotulo" for="a-chave">Onde fica uma chave?</label>
-            <div class="linha-campo"><input id="a-chave" class="campo" placeholder="usuario:42" autocomplete="off"><button class="botao" type="submit">Localizar</button></div>
+            <label for="a-chave">Onde fica uma chave?</label>
+            <div class="linha-campo"><input id="a-chave" class="campo mono" placeholder="usuario:42" autocomplete="off" spellcheck="false"><button class="botao" type="submit">Localizar</button></div>
+            <p class="ajuda-campo">O ponteiro mostra o rumo da chave no anel e quem guarda as cópias.</p>
           </form>
-          <div id="a-resultado"></div>
+          <div id="a-resultado" aria-live="polite"></div>
         </div>
       </div>
     </section>
 
     <section class="pagina" data-secao="chaves" hidden>
-      <div class="caixa">
-        <div class="comp barra-chaves">
-          <form id="c-form" class="linha-campo">
-            <input id="c-prefixo" class="campo" placeholder="Prefixo, por exemplo usuario:" autocomplete="off">
-            <button class="botao" type="submit">Buscar</button>
-            <button class="botao escuro" id="c-nova" type="button">Nova chave</button>
-          </form>
+      <div class="barra-ferramentas">
+        <form id="c-form" class="linha-campo busca-chaves" role="search">
+          <label class="visualmente-oculto" for="c-prefixo">Prefixo</label>
+          <input id="c-prefixo" class="campo mono" placeholder="Prefixo, por exemplo usuario:" autocomplete="off" spellcheck="false">
+          <button class="botao" type="submit">Buscar</button>
+        </form>
+        <div class="acoes">
+          <div class="grupo-botoes">
+            <button class="botao" id="c-exportar" type="button">Exportar</button>
+            <label class="visualmente-oculto" for="c-formato">Formato da exportação</label>
+            <select class="campo seletor" id="c-formato"><option value="ndjson">NDJSON</option><option value="json">JSON</option><option value="csv">CSV</option></select>
+          </div>
+          <button class="botao" id="c-importar" type="button">Importar…</button>
+          <input type="file" id="c-arquivo" accept=".ndjson,.jsonl,.json,.csv,application/json,text/csv" hidden>
+          <button class="botao primario" id="c-nova" type="button">Nova chave</button>
         </div>
-        <div class="comp">
-          <table class="tabela clicavel"><thead><tr><th>Chave</th><th>Valor</th><th class="d">Tamanho</th><th class="d">Gravado</th><th class="d">TTL</th></tr></thead><tbody id="c-tabela"></tbody></table>
-          <div class="rodape-tabela"><span id="c-total"></span><button class="botao" id="c-mais" type="button" hidden>Carregar mais</button></div>
-        </div>
+      </div>
+      <div class="painel">
+        <div class="rolagem"><table class="tabela clicavel"><thead><tr><th scope="col">Chave</th><th scope="col">Valor</th><th scope="col" class="d op">Tamanho</th><th scope="col" class="d op">Gravado</th><th scope="col" class="d">TTL</th></tr></thead><tbody id="c-tabela"></tbody></table></div>
+        <div class="rodape-tabela"><span id="c-total"></span><button class="botao" id="c-mais" type="button" hidden>Carregar mais</button></div>
       </div>
     </section>
 
     <section class="pagina" data-secao="terminal" hidden>
-      <div class="caixa">
-        <div class="comp tampa terminal" id="t-terminal">
-          <div class="t-saida" id="t-saida"></div>
-          <form class="t-linha" id="t-form"><span class="t-prompt">leme ›</span><input id="t-entrada" autocomplete="off" spellcheck="false" aria-label="Comando"></form>
+      <div class="terminal" id="t-terminal">
+        <div class="t-saida" id="t-saida" aria-live="polite"></div>
+        <form class="t-linha" id="t-form"><span class="t-prompt" aria-hidden="true">leme ›</span><input id="t-entrada" autocomplete="off" spellcheck="false" aria-label="Comando"></form>
+      </div>
+    </section>
+
+    <section class="pagina" data-secao="diagnostico" hidden>
+      <div class="barra-ferramentas">
+        <p class="frase-estado" id="d-frase"><span class="ponto" id="d-ponto"></span><span id="d-frase-texto">As verificações ainda não rodaram.</span></p>
+        <div class="acoes"><button class="botao primario" id="d-rodar" type="button">Rodar de novo</button></div>
+      </div>
+      <ol class="verificacoes" id="d-lista" aria-live="polite"></ol>
+      <p class="nota">As mesmas verificações rodam no terminal com <code>leme doctor</code>, que sai com código 8 quando alguma falha.</p>
+    </section>
+
+    <section class="pagina" data-secao="integracoes" hidden>
+      <div class="grade-integ">
+        <div class="painel area-api">
+          <div class="painel-cab"><h2>API REST do console</h2><a class="link" href="/api/v1/openapi.json" target="_blank" rel="noopener">Especificação OpenAPI</a></div>
+          <p class="texto">Tudo o que o console faz passa por esta API. Fora do navegador, envie o token em <code>Authorization: Bearer</code>; com ele, o cabeçalho <code>X-Leme</code> deixa de ser necessário.</p>
+          <div class="token" id="i-token"></div>
+          <div class="rolagem"><table class="tabela"><thead><tr><th scope="col">Método</th><th scope="col">Caminho</th><th scope="col">O que faz</th></tr></thead><tbody id="i-rotas"></tbody></table></div>
+        </div>
+        <div class="painel area-trechos">
+          <div class="painel-cab"><h2>Exemplos prontos</h2></div>
+          <div class="abas" role="tablist" id="i-abas"></div>
+          <div class="trecho"><pre id="i-trecho" tabindex="0"></pre><button class="botao pequeno copiar" id="i-copiar" type="button">Copiar</button></div>
+        </div>
+        <div class="painel area-monit">
+          <div class="painel-cab"><h2>Monitoramento e implantação</h2></div>
+          <div class="integracoes" id="i-lista"></div>
         </div>
       </div>
     </section>
@@ -120,11 +182,40 @@
 </div>
 
 <div class="veu" id="veu" hidden></div>
-<aside class="gaveta" id="gaveta" aria-hidden="true">
-  <div class="gaveta-cabecalho"><h2 id="gv-titulo">Chave</h2><button class="fechar" id="gv-fechar" type="button" aria-label="Fechar">×</button></div>
+<aside class="gaveta" id="gaveta" aria-hidden="true" aria-labelledby="gv-titulo" role="dialog">
+  <div class="gaveta-cabecalho"><h2 id="gv-titulo">Chave</h2><button class="botao-icone" id="gv-fechar" type="button" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="gaveta-corpo" id="gv-corpo"></div>
 </aside>
-<div class="aviso" id="aviso" role="status"></div>
+
+<div class="paleta-fundo" id="paleta-fundo" hidden>
+  <div class="paleta" role="dialog" aria-modal="true" aria-label="Paleta de comandos">
+    <div class="paleta-campo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><input id="paleta-entrada" placeholder="Digite uma página, uma chave ou um comando" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="paleta-lista" aria-autocomplete="list"></div>
+    <ul class="paleta-lista" id="paleta-lista" role="listbox"></ul>
+    <div class="paleta-rodape"><span><kbd>↑</kbd><kbd>↓</kbd> escolher</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> fechar</span></div>
+  </div>
+</div>
+
+<div class="paleta-fundo" id="atalhos-fundo" hidden>
+  <div class="paleta atalhos" role="dialog" aria-modal="true" aria-labelledby="atalhos-titulo">
+    <div class="gaveta-cabecalho"><h2 id="atalhos-titulo">Atalhos de teclado</h2><button class="botao-icone" id="atalhos-fechar" type="button" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <dl class="lista-atalhos">
+      <dt><kbd>Ctrl</kbd><kbd>K</kbd></dt><dd>Paleta de comandos</dd>
+      <dt><kbd>/</kbd></dt><dd>Buscar chaves por prefixo</dd>
+      <dt><kbd>g</kbd><kbd>o</kbd></dt><dd>Visão geral</dd>
+      <dt><kbd>g</kbd><kbd>n</kbd></dt><dd>Nós</dd>
+      <dt><kbd>g</kbd><kbd>a</kbd></dt><dd>Anel</dd>
+      <dt><kbd>g</kbd><kbd>c</kbd></dt><dd>Chaves</dd>
+      <dt><kbd>g</kbd><kbd>t</kbd></dt><dd>Terminal</dd>
+      <dt><kbd>g</kbd><kbd>d</kbd></dt><dd>Diagnóstico</dd>
+      <dt><kbd>g</kbd><kbd>i</kbd></dt><dd>Integrações</dd>
+      <dt><kbd>n</kbd></dt><dd>Nova chave</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Fechar painel ou janela</dd>
+      <dt><kbd>?</kbd></dt><dd>Esta lista</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="notificacao" id="aviso" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body>
 </html>

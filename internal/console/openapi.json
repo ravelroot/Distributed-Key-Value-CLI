@@ -1,0 +1,924 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Leme · API do console",
+    "version": "1.1.0",
+    "description": "API HTTP servida por `leme console`. Use o cookie da sessão do navegador ou `Authorization: Bearer <token-console>`. Pedidos que alteram dados precisam do cabeçalho `X-Leme: 1`, dispensado quando o pedido usa Bearer.",
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080"
+    }
+  ],
+  "security": [
+    {
+      "bearer": []
+    },
+    {
+      "cookie": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Cluster"
+    },
+    {
+      "name": "Chaves"
+    },
+    {
+      "name": "Transferência"
+    },
+    {
+      "name": "Ferramentas"
+    }
+  ],
+  "paths": {
+    "/api/v1/saude": {
+      "get": {
+        "summary": "Saúde do console",
+        "tags": [
+          "Cluster"
+        ],
+        "description": "Responde sem autenticação; útil para healthchecks.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "versao": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/resumo": {
+      "get": {
+        "summary": "Resumo do cluster",
+        "tags": [
+          "Cluster"
+        ],
+        "description": "Nós vivos, chaves, disco, operações, latência p99, dicas pendentes e estatísticas de cada nó.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "resumo": {
+                      "$ref": "#/components/schemas/Resumo"
+                    },
+                    "versao": {
+                      "type": "string"
+                    },
+                    "agora": {
+                      "type": "integer"
+                    },
+                    "consistencia": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/topologia": {
+      "get": {
+        "summary": "Topologia e anel",
+        "tags": [
+          "Cluster"
+        ],
+        "description": "Membros, réplicas, nós virtuais, participação de cada nó no anel e pontos do anel.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/localizar": {
+      "get": {
+        "summary": "Onde fica uma chave",
+        "tags": [
+          "Cluster"
+        ],
+        "description": "Posição no anel e réplicas responsáveis pela chave.",
+        "parameters": [
+          {
+            "name": "k",
+            "in": "query",
+            "required": true,
+            "description": "Nome da chave",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/chaves": {
+      "get": {
+        "summary": "Listar chaves por prefixo",
+        "tags": [
+          "Chaves"
+        ],
+        "description": "Página de até 500 chaves, com valores resumidos.",
+        "parameters": [
+          {
+            "name": "prefixo",
+            "in": "query",
+            "required": false,
+            "description": "Prefixo das chaves",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "depois",
+            "in": "query",
+            "required": false,
+            "description": "Última chave da página anterior",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "description": "Itens por página (1 a 500, padrão 50)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Item"
+                      }
+                    },
+                    "mais": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/chave": {
+      "get": {
+        "summary": "Ler uma chave",
+        "tags": [
+          "Chaves"
+        ],
+        "parameters": [
+          {
+            "name": "k",
+            "in": "query",
+            "required": true,
+            "description": "Nome da chave",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": {
+                      "$ref": "#/components/schemas/Item"
+                    },
+                    "replicas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "respostas": {
+                      "type": "integer"
+                    },
+                    "coordenador": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      },
+      "put": {
+        "summary": "Gravar uma chave",
+        "tags": [
+          "Chaves"
+        ],
+        "description": "Com `se_versao`, só grava se a versão atual for essa (409 em caso de conflito).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "chave"
+                ],
+                "properties": {
+                  "chave": {
+                    "type": "string"
+                  },
+                  "valor": {
+                    "type": "string"
+                  },
+                  "ttl": {
+                    "type": "string",
+                    "examples": [
+                      "30s",
+                      "15m",
+                      "2h"
+                    ]
+                  },
+                  "se_versao": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escrita"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Apagar uma chave",
+        "tags": [
+          "Chaves"
+        ],
+        "parameters": [
+          {
+            "name": "k",
+            "in": "query",
+            "required": true,
+            "description": "Nome da chave",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escrita"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/exportar": {
+      "get": {
+        "summary": "Exportar chaves",
+        "tags": [
+          "Transferência"
+        ],
+        "description": "Baixa as chaves do prefixo com valor, TTL restante e versão. Valores binários vão em base64.",
+        "parameters": [
+          {
+            "name": "prefixo",
+            "in": "query",
+            "required": false,
+            "description": "Prefixo das chaves (vazio exporta tudo)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "description": "Formato do arquivo",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ndjson",
+                "json",
+                "csv"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemExportado"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/importar": {
+      "post": {
+        "summary": "Importar chaves",
+        "tags": [
+          "Transferência"
+        ],
+        "description": "O corpo é o arquivo gerado por `exportar` (ou pelo `leme export`). Preserva o TTL restante.",
+        "parameters": [
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "description": "Formato; se omitido, vem da extensão em `nome`",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ndjson",
+                "json",
+                "csv"
+              ]
+            }
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "description": "Nome do arquivo enviado",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "se_ausente",
+            "in": "query",
+            "required": false,
+            "description": "1 para não sobrescrever chaves existentes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "simular",
+            "in": "query",
+            "required": false,
+            "description": "1 para só validar, sem gravar",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "prefixo",
+            "in": "query",
+            "required": false,
+            "description": "Texto acrescentado antes de cada chave",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-ndjson": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ItemExportado"
+                }
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "relatorio": {
+                      "$ref": "#/components/schemas/Relatorio"
+                    },
+                    "simulado": {
+                      "type": "boolean"
+                    },
+                    "formato": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/diagnostico": {
+      "get": {
+        "summary": "Diagnóstico do cluster",
+        "tags": [
+          "Ferramentas"
+        ],
+        "description": "As mesmas verificações de `leme doctor`: conexão, token, nós no ar, quórum, equilíbrio do anel, dicas, fragmentação e latência.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "verificacoes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Verificacao"
+                      }
+                    },
+                    "contagem": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/executar": {
+      "post": {
+        "summary": "Executar um comando da CLI",
+        "tags": [
+          "Ferramentas"
+        ],
+        "description": "Mesma sintaxe do modo interativo, por exemplo `scan usuario: --limite 5`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "linha": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "saida": {
+                      "type": "string"
+                    },
+                    "erro": {
+                      "type": "string"
+                    },
+                    "codigo": {
+                      "type": "integer"
+                    },
+                    "duracao_ms": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/comandos": {
+      "get": {
+        "summary": "Nomes dos comandos",
+        "tags": [
+          "Ferramentas"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/integracao": {
+      "get": {
+        "summary": "Dados para integração",
+        "tags": [
+          "Ferramentas"
+        ],
+        "description": "Endereço do console e se ele exige token.",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        }
+      }
+    },
+    "/api/v1/openapi.json": {
+      "get": {
+        "summary": "Esta especificação",
+        "tags": [
+          "Ferramentas"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Erro"
+          },
+          "401": {
+            "$ref": "#/components/responses/Erro"
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token passado em --token-console"
+      },
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "leme_console"
+      }
+    },
+    "responses": {
+      "Erro": {
+        "description": "Erro",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "erro": {
+                  "type": "string"
+                },
+                "codigo": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "properties": {
+          "chave": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "string"
+          },
+          "binario": {
+            "type": "boolean"
+          },
+          "tamanho": {
+            "type": "integer"
+          },
+          "versao": {
+            "type": "string"
+          },
+          "gravado": {
+            "type": "integer",
+            "description": "Milissegundos desde 1970"
+          },
+          "expira": {
+            "type": "integer"
+          }
+        }
+      },
+      "Escrita": {
+        "type": "object",
+        "properties": {
+          "versao": {
+            "type": "string"
+          },
+          "confirmacoes": {
+            "type": "integer"
+          },
+          "replicas": {
+            "type": "integer"
+          },
+          "necessarias": {
+            "type": "integer"
+          }
+        }
+      },
+      "ItemExportado": {
+        "type": "object",
+        "properties": {
+          "chave": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "string"
+          },
+          "codificacao": {
+            "type": "string",
+            "enum": [
+              "texto",
+              "base64"
+            ]
+          },
+          "ttl_ms": {
+            "type": "integer"
+          },
+          "versao": {
+            "type": "integer"
+          }
+        }
+      },
+      "Relatorio": {
+        "type": "object",
+        "properties": {
+          "lidos": {
+            "type": "integer"
+          },
+          "gravados": {
+            "type": "integer"
+          },
+          "ignorados": {
+            "type": "integer"
+          },
+          "falhas": {
+            "type": "integer"
+          },
+          "erros": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Verificacao": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "aviso",
+              "falha"
+            ]
+          },
+          "detalhe": {
+            "type": "string"
+          },
+          "sugestao": {
+            "type": "string"
+          }
+        }
+      },
+      "Resumo": {
+        "type": "object",
+        "properties": {
+          "cluster": {
+            "type": "string"
+          },
+          "replicas": {
+            "type": "integer"
+          },
+          "vnodes": {
+            "type": "integer"
+          },
+          "membros": {
+            "type": "integer"
+          },
+          "vivos": {
+            "type": "integer"
+          },
+          "chaves_logicas": {
+            "type": "integer"
+          },
+          "bytes_disco": {
+            "type": "integer"
+          },
+          "operacoes": {
+            "type": "integer"
+          },
+          "p99_get_ms": {
+            "type": "number"
+          },
+          "p99_put_ms": {
+            "type": "number"
+          },
+          "dicas_pendentes": {
+            "type": "integer"
+          },
+          "saude": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"hash/fnv"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/ravelroot/Distributed-Key-Value-CLI/internal/anel"
@@ -387,6 +389,26 @@ func (n *No) verificarCondicao(ctx context.Context, chave []byte, seVersao uint6
 	return atual.Item, existe, nil
 }
 
+// travasCondicionais serializa, por chave, as escritas condicionais que passam
+// por este coordenador. Sem isso, duas escritas com a mesma --se-versao podiam
+// ler a mesma versão e ambas gravarem (verificar e gravar não eram atômicos).
+type travasCondicionais [256]sync.Mutex
+
+func (t *travasCondicionais) de(chave []byte) *sync.Mutex {
+	h := fnv.New32a()
+	h.Write(chave)
+	return &t[h.Sum32()%uint32(len(t))]
+}
+
+// consistenciaCondicional garante pelo menos quórum na escrita condicional, para
+// que a próxima verificação (lida com quórum) sempre enxergue a escrita anterior.
+func consistenciaCondicional(c protocolo.Consistencia) protocolo.Consistencia {
+	if c == protocolo.ConsistenciaPadrao || c == protocolo.ConsistenciaUm {
+		return protocolo.ConsistenciaQuorum
+	}
+	return c
+}
+
 func (n *No) Gravar(ctx context.Context, p protocolo.PedidoPut) (protocolo.RespostaEscrita, error) {
 	if len(p.Chave) == 0 {
 		return protocolo.RespostaEscrita{}, protocolo.NovoErro(protocolo.CodigoRequisicaoInvalida, "informe a chave")
@@ -398,9 +420,13 @@ func (n *No) Gravar(ctx context.Context, p protocolo.PedidoPut) (protocolo.Respo
 		return protocolo.RespostaEscrita{}, protocolo.NovoErro(protocolo.CodigoRequisicaoInvalida, "o TTL não pode ser negativo")
 	}
 	if p.SeVersao != 0 || p.SeAusente {
+		trava := n.condicionais.de(p.Chave)
+		trava.Lock()
+		defer trava.Unlock()
 		if _, _, err := n.verificarCondicao(ctx, p.Chave, p.SeVersao, p.SeAusente, protocolo.ConsistenciaQuorum); err != nil {
 			return protocolo.RespostaEscrita{}, err
 		}
+		p.Consistencia = consistenciaCondicional(p.Consistencia)
 	}
 	it := protocolo.Item{Chave: p.Chave, Valor: p.Valor, Versao: n.relogio.Proxima()}
 	if p.TTL > 0 {
@@ -414,9 +440,13 @@ func (n *No) Apagar(ctx context.Context, p protocolo.PedidoChave) (protocolo.Res
 		return protocolo.RespostaEscrita{}, protocolo.NovoErro(protocolo.CodigoRequisicaoInvalida, "informe a chave")
 	}
 	if p.SeVersao != 0 {
+		trava := n.condicionais.de(p.Chave)
+		trava.Lock()
+		defer trava.Unlock()
 		if _, _, err := n.verificarCondicao(ctx, p.Chave, p.SeVersao, false, protocolo.ConsistenciaQuorum); err != nil {
 			return protocolo.RespostaEscrita{}, err
 		}
+		p.Consistencia = consistenciaCondicional(p.Consistencia)
 	}
 	it := protocolo.Item{Chave: p.Chave, Versao: n.relogio.Proxima(), Lapide: true}
 	return n.replicar(ctx, p.Chave, it, p.Consistencia)

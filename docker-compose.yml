@@ -61,6 +61,29 @@ services:
       no2: { condition: service_healthy }
       no3: { condition: service_healthy }
 
+  # Observabilidade opcional: docker compose --profile observabilidade up -d
+  # Prometheus em http://127.0.0.1:9090 e Grafana em http://127.0.0.1:3000 (admin/admin)
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    profiles: [observabilidade]
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./deploy/prometheus/prometheus-compose.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/prometheus/alertas.yml:/etc/prometheus/alertas.yml:ro
+    ports: ["127.0.0.1:9090:9090"]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    profiles: [observabilidade]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./deploy/grafana/provisionamento:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/leme-dashboard.json:/var/lib/grafana/dashboards/leme-dashboard.json:ro
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: [prometheus]
+
 volumes:
   dados-no1:
   dados-no2:

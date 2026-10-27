@@ -180,6 +180,7 @@ const (
 	SaidaQuorum        = 5
 	SaidaConflito      = 6
 	SaidaAutenticacao  = 7
+	SaidaDiagnostico   = 8
 )
 
 type ErroSaida struct {

@@ -24,6 +24,17 @@ test "$("$BIN/leme" get usuario:1)" = '{"nome":"Ana"}'
 printf 'put pedido:1 um\nput pedido:2 dois\ncount pedido:\n' | "$BIN/leme" shell | grep -qx 2
 "$BIN/leme" bench --operacoes 2000 --concorrencia 16
 
+# 1.1.0: contadores, cópia, várias chaves, backup lógico e diagnóstico
+test "$("$BIN/leme" incr visitas 5)" = 5
+test "$("$BIN/leme" decr visitas)" = 4
+"$BIN/leme" mset config:tema=escuro config:idioma=pt-BR
+"$BIN/leme" rename config:tema config:tema-antigo
+"$BIN/leme" export config: --arquivo "$DADOS/config.ndjson"
+"$BIN/leme" import "$DADOS/config.ndjson" --prefixo restaurado:
+test "$("$BIN/leme" get restaurado:config:tema-antigo)" = escuro
+"$BIN/leme" doctor
+"$BIN/leme" top --vezes 1
+
 kill "${PIDS[2]}"
 sleep 4
 "$BIN/leme" get usuario:1 --consistencia quorum
@@ -31,6 +42,7 @@ sleep 4
 set +e
 "$BIN/leme" get nao-existe; test $? -eq 3 || exit 1
 "$BIN/leme" --token errado get usuario:1; test $? -eq 7 || exit 1
+"$BIN/leme" doctor; test $? -eq 8 || exit 1
 set -e
 
 curl -fsS http://127.0.0.1:9501/saude | grep -q '"status":"ok"'

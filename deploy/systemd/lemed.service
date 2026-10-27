@@ -1,0 +1,41 @@
+# Serviço do nó Leme para systemd.
+#
+#   sudo useradd --system --home /var/lib/leme --shell /usr/sbin/nologin leme
+#   sudo install -m 0755 bin/lemed /usr/local/bin/lemed
+#   sudo install -d -o leme -g leme -m 0750 /var/lib/leme /etc/leme
+#   sudo install -m 0640 -o root -g leme deploy/systemd/lemed.env /etc/leme/lemed.env
+#   sudo install -m 0644 deploy/systemd/lemed.service /etc/systemd/system/lemed.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now lemed
+#   journalctl -u lemed -f
+[Unit]
+Description=Leme, nó do cluster chave-valor
+Documentation=https://github.com/ravelroot/Distributed-Key-Value-CLI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=leme
+Group=leme
+EnvironmentFile=/etc/leme/lemed.env
+ExecStart=/usr/local/bin/lemed
+Restart=on-failure
+RestartSec=2s
+TimeoutStopSec=30s
+LimitNOFILE=65536
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/lib/leme
+ReadOnlyPaths=/etc/leme
+
+[Install]
+WantedBy=multi-user.target

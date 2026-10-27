@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	Versao = "1.0.0"
+	Versao = "1.1.0"
 	Commit = "dev"
 	Data   = ""
 )

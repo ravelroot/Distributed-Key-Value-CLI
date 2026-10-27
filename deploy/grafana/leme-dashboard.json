@@ -1,0 +1,709 @@
+{
+  "title": "Leme · cluster",
+  "uid": "leme-cluster",
+  "tags": [
+    "leme",
+    "chave-valor"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "editable": true,
+  "description": "Painel do cluster Leme: operações, latência, chaves, disco, dicas e reparos. Importe em Dashboards › Import.",
+  "templating": {
+    "list": [
+      {
+        "name": "fonte",
+        "label": "Fonte",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {}
+      },
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${fonte}"
+        },
+        "query": "label_values(leme_chaves, cluster)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Nós no ar",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(up{job=~\"leme.*\"} == 1)",
+          "legendFormat": "nós",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2F6E4F",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Chaves (cópias)",
+      "description": "",
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(leme_chaves{cluster=~\"$cluster\"})",
+          "legendFormat": "chaves",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2F6E4F",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Disco",
+      "description": "",
+      "gridPos": {
+        "x": 9,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(leme_bytes_disco{cluster=~\"$cluster\"})",
+          "legendFormat": "disco",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2F6E4F",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Dicas pendentes",
+      "description": "",
+      "gridPos": {
+        "x": 14,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(leme_dicas_pendentes{cluster=~\"$cluster\"})",
+          "legendFormat": "dicas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2F6E4F",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Operações/s",
+      "description": "",
+      "gridPos": {
+        "x": 19,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(leme_operacoes_total{cluster=~\"$cluster\",op=~\"GET|PUT|DEL|SCAN\"}[1m]))",
+          "legendFormat": "ops/s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2F6E4F",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Operações por segundo",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (op) (rate(leme_operacoes_total{cluster=~\"$cluster\",op=~\"GET|PUT|DEL|SCAN|EXPIRAR|TTL\"}[1m]))",
+          "legendFormat": "{{op}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Latência p99",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.99, sum by (le, op) (rate(leme_operacao_segundos_bucket{cluster=~\"$cluster\",op=~\"GET|PUT|DEL\"}[5m])))",
+          "legendFormat": "p99 {{op}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Erros por segundo",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 8,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (no, op) (rate(leme_erros_total{cluster=~\"$cluster\"}[1m]))",
+          "legendFormat": "{{no}} {{op}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Chaves por nó",
+      "description": "",
+      "gridPos": {
+        "x": 8,
+        "y": 12,
+        "w": 8,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "leme_chaves{cluster=~\"$cluster\"}",
+          "legendFormat": "{{no}} vivas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "leme_lapides{cluster=~\"$cluster\"}",
+          "legendFormat": "{{no}} lápides",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Disco e registros vivos",
+      "description": "",
+      "gridPos": {
+        "x": 16,
+        "y": 12,
+        "w": 8,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "leme_bytes_disco{cluster=~\"$cluster\"}",
+          "legendFormat": "{{no}} disco",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "leme_bytes_vivos{cluster=~\"$cluster\"}",
+          "legendFormat": "{{no}} vivos",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Dicas e reparos",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "leme_dicas_pendentes{cluster=~\"$cluster\"}",
+          "legendFormat": "{{no}} dicas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(leme_reparos_leitura_total{cluster=~\"$cluster\"}[5m])",
+          "legendFormat": "{{no}} reparos/s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Conexões e memória",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fonte}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "leme_conexoes{cluster=~\"$cluster\"}",
+          "legendFormat": "{{no}} conexões",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "leme_memoria_bytes{cluster=~\"$cluster\"} / 1048576",
+          "legendFormat": "{{no}} MiB",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fonte}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

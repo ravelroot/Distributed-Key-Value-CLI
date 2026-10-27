@@ -1,0 +1,42 @@
+groups:
+  - name: leme
+    rules:
+      - alert: LemeNoForaDoAr
+        expr: up{job=~"leme.*"} == 0
+        for: 1m
+        labels: { severidade: critica }
+        annotations:
+          resumo: "Nó {{ $labels.instance }} não responde"
+          descricao: "O Prometheus não coleta métricas do nó há 1 minuto. Confira o processo e rode leme doctor."
+
+      - alert: LemeDicasAcumulando
+        expr: sum by (cluster) (leme_dicas_pendentes) > 1000
+        for: 5m
+        labels: { severidade: alerta }
+        annotations:
+          resumo: "{{ $value }} escritas aguardando réplicas no cluster {{ $labels.cluster }}"
+          descricao: "Alguma réplica está fora do ar há mais de 5 minutos. As dicas são entregues quando ela voltar."
+
+      - alert: LemeLatenciaAlta
+        expr: histogram_quantile(0.99, sum by (le, op, no) (rate(leme_operacao_segundos_bucket{op=~"GET|PUT|DEL"}[5m]))) > 0.25
+        for: 10m
+        labels: { severidade: alerta }
+        annotations:
+          resumo: "p99 de {{ $labels.op }} acima de 250 ms no nó {{ $labels.no }}"
+          descricao: "Veja disco e rede do nó; LEME_SINCRONIZAR=sempre deixa as escritas mais lentas."
+
+      - alert: LemeTaxaDeErros
+        expr: sum by (no) (rate(leme_erros_total{op=~"GET|PUT|DEL"}[5m])) / clamp_min(sum by (no) (rate(leme_operacoes_total{op=~"GET|PUT|DEL"}[5m])), 1e-9) > 0.05
+        for: 10m
+        labels: { severidade: alerta }
+        annotations:
+          resumo: "Mais de 5% de erros no nó {{ $labels.no }}"
+          descricao: "Inclui chaves ausentes e conflitos de versão; confira com leme node stats {{ $labels.no }}."
+
+      - alert: LemeFragmentacao
+        expr: (1 - leme_bytes_vivos / clamp_min(leme_bytes_disco, 1)) > 0.6 and leme_bytes_disco > 1e9
+        for: 1h
+        labels: { severidade: aviso }
+        annotations:
+          resumo: "Disco do nó {{ $labels.no }} mais de 60% ocupado por registros mortos"
+          descricao: "Rode leme node compact {{ $labels.no }} fora do horário de pico."

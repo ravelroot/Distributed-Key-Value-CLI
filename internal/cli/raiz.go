@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -48,7 +49,7 @@ type app struct {
 func Executar(args []string, entrada *os.File, saida, erro io.Writer) int {
 	a := &app{entrada: entrada, arqEntrada: entrada, saida: saida, erro: erro}
 	raiz := a.construir()
-	raiz.SetArgs(args)
+	raiz.SetArgs(protegerNegativos(args))
 	raiz.SetIn(entrada)
 	raiz.SetOut(saida)
 	raiz.SetErr(erro)
@@ -143,6 +144,10 @@ func (a *app) construir() *cobra.Command {
   leme get usuario:42                     lê o valor
   leme scan pedido: --limite 20           lista chaves por prefixo
   leme cluster status                     resumo do cluster
+  leme incr visitas:home                  contador atômico
+  leme export > backup.ndjson             backup lógico de todas as chaves
+  leme doctor                             diagnostica o cluster
+  leme top                                painel ao vivo
   leme dev --quantidade 3                 sobe um cluster local para testes
   leme console                            abre o console web`,
 		Version:       versao.Versao,
@@ -157,7 +162,7 @@ func (a *app) construir() *cobra.Command {
 	raiz.SetUsageTemplate(modelo)
 	raiz.SetVersionTemplate("{{.Version}}\n")
 	raiz.CompletionOptions.DisableDefaultCmd = true
-	raiz.SetHelpCommand(&cobra.Command{Hidden: true, Use: "no-help"})
+	raiz.SetHelpCommand(&cobra.Command{Hidden: true, Use: "no-help", GroupID: "Ferramentas"})
 	pf := raiz.PersistentFlags()
 	pf.BoolP("help", "h", false, "mostra a ajuda")
 	pf.StringSliceVar(&a.nos, "nos", nil, "nós do cluster, host:porta separados por vírgula (LEME_NOS)")
@@ -194,7 +199,7 @@ func (a *app) construir() *cobra.Command {
 			raiz.AddCommand(cc)
 		}
 	}
-	raiz.AddCommand(a.cmdShell(), a.cmdConsole(), a.cmdDev(), a.cmdBench(), a.cmdConfig(), a.cmdVersao(), a.cmdCompletar())
+	raiz.AddCommand(a.cmdExport(), a.cmdImport(), a.cmdWatch(), a.cmdTop(), a.cmdShell(), a.cmdConsole(), a.cmdDev(), a.cmdBench(), a.cmdConfig(), a.cmdVersao(), a.cmdCompletar())
 	return raiz
 }
 
@@ -204,6 +209,26 @@ func abreviar(p string) string {
 	}
 	return p
 }
+
+// marcaNegativo protege números negativos ("incr estoque:7 -3", "put saldo -5")
+// do analisador de flags, que os confundiria com opções curtas. Nenhuma opção
+// do Leme tem dígito como letra curta, então o número volta intacto no RunE.
+const marcaNegativo = "\x1fneg:"
+
+var numeroNegativo = regexp.MustCompile(`^-[0-9]+(\.[0-9]+)?$`)
+
+func protegerNegativos(args []string) []string {
+	out := make([]string, len(args))
+	for i, v := range args {
+		if numeroNegativo.MatchString(v) {
+			v = marcaNegativo + v
+		}
+		out[i] = v
+	}
+	return out
+}
+
+func restaurarNegativo(v string) string { return strings.TrimPrefix(v, marcaNegativo) }
 
 func (a *app) deRegistro(c *comandos.Comando) *cobra.Command {
 	use := c.Nome
@@ -238,10 +263,14 @@ func (a *app) deRegistro(c *comandos.Comando) *cobra.Command {
 		}
 	}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		args2 := comandos.Args{Pos: args, Flags: map[string]string{}, Entrada: a.entrada}
+		pos := make([]string, len(args))
+		for i, v := range args {
+			pos[i] = restaurarNegativo(v)
+		}
+		args2 := comandos.Args{Pos: pos, Flags: map[string]string{}, Entrada: a.entrada}
 		for _, f := range c.Flags {
 			if fl := cmd.Flags().Lookup(f.Nome); fl != nil && fl.Changed {
-				args2.Flags[f.Nome] = fl.Value.String()
+				args2.Flags[f.Nome] = restaurarNegativo(fl.Value.String())
 			}
 		}
 		s, err := a.sessao(cmd.Context())

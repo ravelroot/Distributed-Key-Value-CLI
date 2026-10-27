@@ -27,6 +27,9 @@ import (
 //go:embed web
 var arquivos embed.FS
 
+//go:embed openapi.json
+var especificacao []byte
+
 type Config struct {
 	Cliente      *cliente.Cliente
 	Consistencia protocolo.Consistencia
@@ -96,10 +99,30 @@ func (s *Servidor) Handler() http.Handler {
 	mux.Handle("POST /api/v1/executar", s.autenticado(s.executar, false))
 	mux.Handle("GET /api/v1/comandos", s.autenticado(s.listaComandos, false))
 	mux.Handle("GET /api/v1/localizar", s.autenticado(s.localizar, false))
-	return seguranca(mux)
+	mux.Handle("GET /api/v1/exportar", s.autenticado(s.exportar, false))
+	mux.Handle("POST /api/v1/importar", s.autenticado(s.importar, false))
+	mux.Handle("GET /api/v1/diagnostico", s.autenticado(s.diagnostico, false))
+	mux.Handle("GET /api/v1/integracao", s.autenticado(s.integracao, false))
+	mux.Handle("GET /api/v1/openapi.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Write(especificacao)
+	}))
+	return s.seguranca(mux)
 }
 
-func seguranca(h http.Handler) http.Handler {
+// portador devolve verdadeiro quando o pedido traz Authorization: Bearer com o
+// token do console. O navegador nunca envia esse cabeçalho sozinho, então um
+// pedido assim não pode ter sido forjado por outra página (sem CSRF).
+func (s *Servidor) portador(r *http.Request) bool {
+	a := r.Header.Get("Authorization")
+	if s.cfg.Token == "" || !strings.HasPrefix(a, "Bearer ") {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(a, "Bearer ")), []byte(s.cfg.Token)) == 1
+}
+
+func (s *Servidor) seguranca(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cab := w.Header()
 		cab.Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
@@ -107,7 +130,7 @@ func seguranca(h http.Handler) http.Handler {
 		cab.Set("X-Frame-Options", "DENY")
 		cab.Set("Referrer-Policy", "no-referrer")
 		cab.Set("Cross-Origin-Opener-Policy", "same-origin")
-		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Header.Get("X-Leme") != "1" {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Header.Get("X-Leme") != "1" && !s.portador(r) {
 			responder(w, http.StatusForbidden, map[string]any{"erro": "cabeçalho X-Leme ausente"})
 			return
 		}
@@ -213,7 +236,11 @@ func (s *Servidor) resumo(w http.ResponseWriter, r *http.Request) {
 		falha(w, err)
 		return
 	}
-	responder(w, http.StatusOK, map[string]any{"resumo": res, "versao": versao.Versao, "agora": time.Now().UnixMilli()})
+	cons := s.cfg.Consistencia.String()
+	if s.cfg.Consistencia == protocolo.ConsistenciaPadrao {
+		cons = "quorum"
+	}
+	responder(w, http.StatusOK, map[string]any{"resumo": res, "versao": versao.Versao, "agora": time.Now().UnixMilli(), "consistencia": cons})
 }
 
 func (s *Servidor) topologia(w http.ResponseWriter, r *http.Request) {
@@ -426,4 +453,116 @@ func (s *Servidor) localizar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responder(w, http.StatusOK, map[string]any{"chave": k, "posicao": float64(anel.Hash([]byte(k))) / float64(^uint64(0)), "replicas": donos})
+}
+
+// escritorRastreado registra se algo já foi enviado, para saber se ainda dá
+// para responder um erro em JSON.
+type escritorRastreado struct {
+	http.ResponseWriter
+	escreveu bool
+}
+
+func (e *escritorRastreado) Write(b []byte) (int, error) {
+	e.escreveu = true
+	return e.ResponseWriter.Write(b)
+}
+
+func formatoTransferencia(formato, nome string) (string, error) {
+	formato = strings.ToLower(strings.TrimSpace(formato))
+	if formato == "" {
+		switch {
+		case strings.HasSuffix(strings.ToLower(nome), ".csv"):
+			formato = "csv"
+		case strings.HasSuffix(strings.ToLower(nome), ".json"):
+			formato = "json"
+		default:
+			formato = "ndjson"
+		}
+	}
+	switch formato {
+	case "ndjson", "json", "csv":
+		return formato, nil
+	}
+	return "", comandos.Uso("formato desconhecido: %q (use ndjson, json ou csv)", formato)
+}
+
+func nomeArquivo(prefixo, ext string) string {
+	limpo := strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_':
+			return r
+		}
+		return '-'
+	}, strings.TrimRight(prefixo, ":/"))
+	if limpo == "" {
+		limpo = "tudo"
+	}
+	if len(limpo) > 40 {
+		limpo = limpo[:40]
+	}
+	return "leme-" + limpo + "-" + time.Now().Format("20060102-150405") + "." + ext
+}
+
+func (s *Servidor) exportar(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	formato, err := formatoTransferencia(q.Get("formato"), "")
+	if err != nil {
+		falha(w, err)
+		return
+	}
+	tipos := map[string]string{"ndjson": "application/x-ndjson", "json": "application/json", "csv": "text/csv"}
+	prefixo := q.Get("prefixo")
+	ctx, cancelar := context.WithTimeout(r.Context(), 10*time.Minute)
+	defer cancelar()
+	w.Header().Set("Content-Type", tipos[formato]+"; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+nomeArquivo(prefixo, formato)+`"`)
+	er := &escritorRastreado{ResponseWriter: w}
+	if _, err := comandos.Exportar(ctx, s.sessao(), prefixo, formato, er); err != nil && !er.escreveu {
+		w.Header().Del("Content-Disposition")
+		falha(w, err)
+	}
+}
+
+func (s *Servidor) importar(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	formato, err := formatoTransferencia(q.Get("formato"), q.Get("nome"))
+	if err != nil {
+		falha(w, err)
+		return
+	}
+	sim := func(v string) bool { return v == "1" || v == "true" || v == "sim" }
+	op := comandos.OpcoesImportar{Formato: formato, SeAusente: sim(q.Get("se_ausente")), Simular: sim(q.Get("simular")), Prefixo: q.Get("prefixo")}
+	ctx, cancelar := context.WithTimeout(r.Context(), 10*time.Minute)
+	defer cancelar()
+	rel, err := comandos.Importar(ctx, s.sessao(), r.Body, op)
+	if err != nil {
+		falha(w, err)
+		return
+	}
+	responder(w, http.StatusOK, map[string]any{"relatorio": rel, "simulado": op.Simular, "formato": formato})
+}
+
+func (s *Servidor) diagnostico(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelar := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancelar()
+	vs := comandos.Diagnosticar(ctx, s.sessao())
+	cont := map[string]int{"ok": 0, "aviso": 0, "falha": 0}
+	for _, v := range vs {
+		cont[v.Estado]++
+	}
+	responder(w, http.StatusOK, map[string]any{"verificacoes": vs, "contagem": cont, "agora": time.Now().UnixMilli()})
+}
+
+func (s *Servidor) integracao(w http.ResponseWriter, r *http.Request) {
+	esquema := "http"
+	if r.TLS != nil {
+		esquema = "https"
+	}
+	responder(w, http.StatusOK, map[string]any{
+		"url":       esquema + "://" + r.Host,
+		"protegido": s.cfg.Token != "",
+		"token":     s.cfg.Token,
+		"versao":    versao.Versao,
+	})
 }

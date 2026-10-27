@@ -3,7 +3,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-ARG VERSAO=1.0.0
+ARG VERSAO=1.1.0
 ARG COMMIT=docker
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X github.com/ravelroot/Distributed-Key-Value-CLI/internal/versao.Versao=${VERSAO} -X github.com/ravelroot/Distributed-Key-Value-CLI/internal/versao.Commit=${COMMIT}" -o /saida/leme ./cmd/leme \
  && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X github.com/ravelroot/Distributed-Key-Value-CLI/internal/versao.Versao=${VERSAO} -X github.com/ravelroot/Distributed-Key-Value-CLI/internal/versao.Commit=${COMMIT}" -o /saida/lemed ./cmd/lemed
