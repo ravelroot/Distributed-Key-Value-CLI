@@ -82,3 +82,4 @@
 2026-11-06 3º turno 18:36 (Brasília)
 2026-11-06 4º turno 20:04 (Brasília)
 2026-11-06 5º turno 21:26 (Brasília)
+2026-11-06 6º turno 23:59 (Brasília)
